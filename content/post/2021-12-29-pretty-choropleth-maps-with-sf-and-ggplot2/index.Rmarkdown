@@ -1,0 +1,178 @@
+---
+title: Pretty choropleth maps with {sf} and {ggplot2}
+author: Ben Vigreux
+date: '2021-12-29'
+slug: pretty-choropleth-maps-with-sf-and-ggplot2
+---
+
+## tl;dr
+
+In this post, I produce a simple example of a choropleth map in R. In doing so, I go over how to use the [{sf}](https://github.com/r-spatial/sf/) package to read in and display geographic boundaries from the [ONS Open Geography Portal](https://geoportal.statistics.gov.uk/) and show how we can make any static map interactive with [{plotly}](https://plotly.com/r/).
+
+
+## Everyone loves a map
+
+I sometimes get asked "how do you make a map in R?" While there are multiple ways
+to do this (and multiple packages to do so), the approach I show here is my go-to
+to produce a [choropleth map](https://datavizproject.com/data-type/choropleth-map-2/)
+using UK geographic boundaries. 
+
+The process can be summarised by the following steps:
+
+1. Read in the data you want to display on a map
+2. Read in geographic boundaries
+3. Combine those into one dataframe
+4. Use {ggplot2} and {sf} to produce a choropleth map  
+5. (Optional) Make this map interactive with {plotly}
+
+
+### Packages
+
+Before doing anything else, we want to load the following packages:
++ {tidyverse} to manipulate our data and visualise it using ggplot2  
++ {sf} is the package that deals with our geographic boundaries
++ {viridis} for its colourblind-friendly colour palette
++ {plotly} to make our map interactive
+
+```{r setup, include=FALSE}
+library(janitor)
+library(knitr)
+#knitr::opts_chunk$set(collapse = TRUE)
+# library(DT)
+# options(DT.options = list(dom = 't'))
+```
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse) 
+library(sf)
+library(viridis)
+library(plotly)
+```
+
+### Step 1: Read in the data that will be displayed on a map
+
+The data I want to map is the median age in each local authority in the UK, 
+which can be found [here](https://www.ons.gov.uk/datasets/ageing-population-estimates/editions/time-series/versions/1). I've already loaded this data and stored it in a dataframe 
+called _age_data_, which looks like this:
+
+```{r, echo=FALSE, message=FALSE}
+age_data <- read_csv("data/ageing-population-estimates-time-series-v1.csv") %>% 
+  clean_names() %>% 
+  filter(age_groups == "median",
+         unit_of_measure == "number",
+         sex == "all") %>% 
+  rename(median_age = v4_1) %>% 
+  select(administrative_geography, geography, median_age)
+
+age_data %>% head() 
+```
+
+My data includes standard geography codes for each local authority (called _administrative_geography_). This is important because we will need this variable later in Step 3 when we join our data to geographic boundaries data. 
+
+### Step 2: Find and read in geographic boundaries
+
+Next, we will want to get local authority boundaries from the ONS Open Geography Portal. The Open Geography Portal provides boundaries for a multitude of UK geographies. Here, we're interested in local authority boundaries in 2020, which we can find [here](https://geoportal.statistics.gov.uk/datasets/local-authority-districts-december-2020-uk-buc-1/explore).^[Note: ONS boundaries typically come in 4 different versions (BFE, BFC, BGC and BUC). These differ primarily in their resolution/how granular they are. If you're not sure which version to use, I'd generally start with BUC, as it's the lowest resolution and so will be quicker to read in/manipulate.] 
+
+The format we want to import geographic boundaries in is called 'GeoJSON'. This 
+is a format that is specifically designed to encode geographic data structures. 
+Getting this format takes a bit of navigating. From the page linked above, we click 
+on "View Full Details". 
+
+![screenshot of a standard ONS Open Geography Portal page for geographic boundaries](screenshots/screenshot-1.png)
+
+This will take us to a new page. On this new page, we scroll down to find the section
+"View API Resources" and copy the GeoJSON link. 
+
+![screenshot of the "View API Resources" section](screenshots/screenshot-2.png)
+
+To load the geographic boundaries in R, we use this GeoJSON link as an argument of the 
+read_sf() function, as shown below. The read_sf() function will do its job, which is to retrieve the information from the ONS website and import it into R. 
+
+```{r}
+lad_boundaries_2020 <- read_sf("https://opendata.arcgis.com/datasets/69d8b52032024edf87561fb60fe07c85_0.geojson") 
+```
+
+Our new object _lad_boundaries_2020_ contains geographic information on all local authorities 
+in the UK, including their centroid latitude and longitude, as well as
+their geometry (how they should be drawn on a map).
+
+```{r echo=FALSE}
+lad_boundaries_2020 %>% 
+  select(-LAD20NMW, -OBJECTID) %>% 
+  select(LAD20CD, LAD20NM, LAT, LONG, geometry, everything()) %>% 
+  head() 
+```
+
+### Step 3: Combine our data into one dataframe
+
+We then combine the data we want to map with geographic boundaries 
+for all local authorities. We do this by joining _age_data_ onto _lad_boundaries_2020_,
+using standard local authority codes as the variable to join these 2 datasets by. 
+
+```{r}
+combined_data <- lad_boundaries_2020 %>% 
+  left_join(age_data, 
+            by = c("LAD20CD" = "administrative_geography"))
+```
+
+### Step 4: It's mapping time!
+
+We can now use standard {ggplot2} syntax to produce our map! The code below shows
+how to produce the simplest choropleth map. We use the __fill__ aesthetic to change 
+the colour of each local authority based on the _median_age_ of the people 
+who live there.  
+
+```{r}
+simple_choro_map <- combined_data %>% 
+  ggplot(aes(fill = median_age)) + # create a ggplot object and change its fill colour according to median_age
+  geom_sf() # plot all local authority geometries
+
+simple_choro_map
+
+```
+
+## Everyone loves a _pretty_ map
+
+OK, we have a choropleth map. But I think you'll agree that it's not yet the clearest 
+map. Personally, I think:
++ The colour scale makes it difficult to differentiate between local authorities with a high/low median age
++ The outlines of each local authority make it difficult to see what's happening in regions where there are many small local authorities (e.g. London)
++ The background grid and axes aren't necessary and they distract me from looking at what's important - the map!
+
+Let's make a few visual tweaks...
+  
+```{r}
+pretty_choro_map <- combined_data %>% 
+  ggplot(aes(fill = median_age,
+             text = str_c(LAD20NM, ": ", median_age) # (Optional: this addition 
+             # is not useful for a static map but will be useful in the next section
+             # where we make our map interactive)
+             )
+         ) + 
+  geom_sf(colour = NA) + # Adding 'colour = NA' removes boundary lines around each LA
+  scale_fill_viridis("Median age") + # Changes our colour scale to viridis and 
+  # prettifies our fill title in the legend, from "median_age" to "Median age"
+  theme_void() # removes unnecessary background grid and axes
+  
+pretty_choro_map
+
+```
+
+Better? Definitely! And there we have it, a pretty static choropleth map made in R using {sf} and {ggplot2}.
+
+Depending on your use case for this map, you may even wish to add to it in different ways. For example, you may want to zoom in on what's happening in a specific region; highlight the areas with particularly high median age by colouring their boundaries red; or plot the location of particular services (e.g. care homes). Although we won't go through these adjustments in this post, these adjustments are all possible using {ggplot2} and other packages. If you can think it, it can usually be done.  
+
+## Everyone loves a pretty _interactive_ map
+
+Optionally, we could even go one step further from a static map and make our choropleth map interactive. This means we'll be able to engage with it by hovering, zooming in, etc. 
+
+Thankfully, the {plotly} package makes it straightforward to transform any static chart produced with ggplot() into an interactive chart. All we need to do is wrap our static map into the ggplotly() function and add any visual tweaks we want (such as specifying which information we want to see when we hover over a local authority).
+
+```{r}
+interactive_map <- ggplotly(pretty_choro_map, # wrap static map in ggplotly()
+                            tooltip = "text" # (Optional: set the text aesthetic
+                            # to be what we see when we hover over a local authority)
+                            )
+
+interactive_map
+```
