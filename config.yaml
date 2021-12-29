@@ -1,6 +1,6 @@
 baseurl: https://rdvark.net/
 languageCode: en-us
-title: A Hugo website
+title: Rdvark - an R blog
 theme: hugo-lithium
 googleAnalytics: ''
 disqusShortname: ''
@@ -16,15 +16,11 @@ menu:
   main:
     - name: About
       url: /about/
-    - name: GitHub
-      url: https://github.com/rstudio/blogdown
-    - name: Twitter
-      url: https://twitter.com/rstudio
 params:
   MathJaxCDN: //cdnjs.cloudflare.com/ajax/libs
   MathJaxVersion: 2.7.5
-  description: A website built through Hugo and blogdown.
-  favicon: favicon.ico
+  description: A blog about R and other fun data things. 
+  favicon: favicon.png
   highlightjsCDN: //cdnjs.cloudflare.com/ajax/libs
   highlightjsLang:
     - r
@@ -34,7 +30,7 @@ params:
   logo:
     alt: Logo
     height: 50
-    url: logo.png
+    url: aardvark-icon.png
     width: 50
 markup:
   defaultMarkdownHandler: goldmark
