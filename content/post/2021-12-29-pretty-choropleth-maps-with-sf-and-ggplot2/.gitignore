@@ -4,8 +4,9 @@
 .Ruserdata
 .DS_Store
 Thumbs.db
-.DS_Store
-Thumbs.db
 .hugo_build.lock
-public
-resources
+.httr-oauth
+/public/
+/resources/
+/*_cache/
+/cache/
