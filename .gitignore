@@ -5,5 +5,8 @@
 .DS_Store
 Thumbs.db
 .hugo_build.lock
+.httr-oauth
 /public/
 /resources/
+/*_cache/
+/cache/
