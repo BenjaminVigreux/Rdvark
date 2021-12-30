@@ -3,19 +3,26 @@ title: Pretty choropleth maps with {sf} and {ggplot2}
 author: Ben Vigreux
 date: '2021-12-29'
 slug: pretty-choropleth-maps-with-sf-and-ggplot2
+categories: 
+  - data-viz
+  - geospatial
+  - code
+tags: 
+  - maps
+  - sf
+  - ggplot2
+  - plotly
+  - open-geography-portal
 ---
 
 ## tl;dr
 
-In this post, I produce a simple example of a choropleth map in R. In doing so, I go over how to use the [{sf}](https://github.com/r-spatial/sf/) package to read in and display geographic boundaries from the [ONS Open Geography Portal](https://geoportal.statistics.gov.uk/) and show how we can make any static map interactive with [{plotly}](https://plotly.com/r/).
+In this post, I produce a simple example of a choropleth map in R. I go over how to use the [{sf}](https://github.com/r-spatial/sf/) package to read in and display geographic boundaries from the [ONS Open Geography Portal](https://geoportal.statistics.gov.uk/) and show how we can make any static map interactive with [{plotly}](https://plotly.com/r/).
 
 
 ## Everyone loves a map
 
-I sometimes get asked "how do you make a map in R?" While there are multiple ways
-to do this (and multiple packages to do so), the approach I show here is my go-to
-to produce a [choropleth map](https://datavizproject.com/data-type/choropleth-map-2/)
-using UK geographic boundaries. 
+[Choropleth maps](https://datavizproject.com/data-type/choropleth-map-2/) are an excellent data visualisation tool to show variation in some factor across different geographies. While there are multiple ways to produce such a map (and multiple packages to do so), in this post I show my go-to approach to produce a choropleth map using UK geographic boundaries. 
 
 The process can be summarised by the following steps:
 
@@ -37,6 +44,7 @@ Before doing anything else, we want to load the following packages:
 ```{r setup, include=FALSE}
 library(janitor)
 library(knitr)
+library(htmlwidgets)
 #knitr::opts_chunk$set(collapse = TRUE)
 # library(DT)
 # options(DT.options = list(dom = 't'))
@@ -166,13 +174,33 @@ Depending on your use case for this map, you may even wish to add to it in diffe
 
 Optionally, we could even go one step further from a static map and make our choropleth map interactive. This means we'll be able to engage with it by hovering, zooming in, etc. 
 
-Thankfully, the {plotly} package makes it straightforward to transform any static chart produced with ggplot() into an interactive chart. All we need to do is wrap our static map into the ggplotly() function and add any visual tweaks we want (such as specifying which information we want to see when we hover over a local authority).
+Thankfully, the {plotly} package makes it straightforward to transform any static chart produced with ggplot() into an interactive chart. All we need to do is wrap our static map into the ggplotly() function and add any visual tweaks we want (such as specifying which information we want to see when we hover over a local authority).^[meta: thanks to JLaw for [showing how to include plotly charts without massively inflating this blog post's reading timer!](https://jlaw.netlify.app/2021/07/26/how-to-not-have-plot-ly-inflate-hugo-s-reading-time/)]
 
-```{r}
+```{r eval=FALSE}
 interactive_map <- ggplotly(pretty_choro_map, # wrap static map in ggplotly()
                             tooltip = "text" # (Optional: set the text aesthetic
                             # to be what we see when we hover over a local authority)
                             )
 
 interactive_map
+```
+
+```{r echo=FALSE}
+interactive_map <- ggplotly(pretty_choro_map, # wrap static map in ggplotly()
+                            tooltip = "text" # (Optional: set the text aesthetic
+                            # to be what we see when we hover over a local authority)
+                            )
+
+htmlwidgets::saveWidget(interactive_map, file="interactive_map.html", selfcontained = T)
+```
+
+```{r echo=FALSE}
+htmltools::tags$iframe(
+  src = "interactive_map.html", 
+  scrolling = "no", 
+  seamless = "seamless",
+  frameBorder = "0",
+  height=600,
+  width=700
+)
 ```
