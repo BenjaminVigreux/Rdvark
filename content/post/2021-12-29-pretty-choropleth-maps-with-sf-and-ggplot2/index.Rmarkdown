@@ -97,7 +97,9 @@ To load the geographic boundaries in R, we use this GeoJSON link as an argument 
 read_sf() function, as shown below. The read_sf() function will do its job, which is to retrieve the information from the ONS website and import it into R. 
 
 ```{r}
-lad_boundaries_2020 <- read_sf("https://opendata.arcgis.com/datasets/69d8b52032024edf87561fb60fe07c85_0.geojson") 
+GeoJSON_url <- "https://opendata.arcgis.com/datasets/69d8b52032024edf87561fb60fe07c85_0.geojson"
+
+lad_boundaries_2020 <- read_sf(GeoJSON_url) 
 ```
 
 Our new object _lad_boundaries_2020_ contains geographic information on all local authorities 
@@ -132,7 +134,8 @@ who live there.
 
 ```{r}
 simple_choro_map <- combined_data %>% 
-  ggplot(aes(fill = median_age)) + # create a ggplot object and change its fill colour according to median_age
+  ggplot(aes(fill = median_age)) + # create a ggplot object and change 
+  # its fill colour according to median_age
   geom_sf() # plot all local authority geometries
 
 simple_choro_map
@@ -152,14 +155,15 @@ Let's make a few visual tweaks...
 ```{r}
 pretty_choro_map <- combined_data %>% 
   ggplot(aes(fill = median_age,
-             text = str_c(LAD20NM, ": ", median_age) # (Optional: this addition 
-             # is not useful for a static map but will be useful in the next section
-             # where we make our map interactive)
+             text = str_c(LAD20NM, ": ", median_age) # (Optional: this 
+             # addition is not used for a static map but will be useful 
+             # in the next section where we make our map interactive)
              )
          ) + 
-  geom_sf(colour = NA) + # Adding 'colour = NA' removes boundary lines around each LA
-  scale_fill_viridis("Median age") + # Changes our colour scale to viridis and 
-  # prettifies our fill title in the legend, from "median_age" to "Median age"
+  geom_sf(colour = NA) + # Adding 'colour = NA' removes boundary lines 
+  # around each LA
+  scale_fill_viridis("Median age") + # Changes our colour scale to 
+  # viridis and prettifies our fill title in the legend
   theme_void() # removes unnecessary background grid and axes
   
 pretty_choro_map
@@ -177,18 +181,22 @@ Optionally, we could even go one step further from a static map and make our cho
 Thankfully, the {plotly} package makes it straightforward to transform any static chart produced with ggplot() into an interactive chart. All we need to do is wrap our static map into the ggplotly() function and add any visual tweaks we want (such as specifying which information we want to see when we hover over a local authority).^[meta: thanks to JLaw for [showing how to include plotly charts without massively inflating this blog post's reading timer!](https://jlaw.netlify.app/2021/07/26/how-to-not-have-plot-ly-inflate-hugo-s-reading-time/)]
 
 ```{r eval=FALSE}
-interactive_map <- ggplotly(pretty_choro_map, # wrap static map in ggplotly()
-                            tooltip = "text" # (Optional: set the text aesthetic
-                            # to be what we see when we hover over a local authority)
-                            )
+interactive_map <- ggplotly(pretty_choro_map, # wrap static map in 
+                            # ggplotly()
+                            tooltip = "text" # (Optional: set the text 
+                            # aesthetic to be what we see when we hover 
+                            # over a local authority)
+                            ) 
 
 interactive_map
 ```
 
 ```{r echo=FALSE}
-interactive_map <- ggplotly(pretty_choro_map, # wrap static map in ggplotly()
-                            tooltip = "text" # (Optional: set the text aesthetic
-                            # to be what we see when we hover over a local authority)
+interactive_map <- ggplotly(pretty_choro_map, # wrap static map in 
+                            # ggplotly()
+                            tooltip = "text" # (Optional: set the 'text' 
+                            # aesthetic to be what we see when we hover 
+                            # over a local authority)
                             )
 
 htmlwidgets::saveWidget(interactive_map, file="interactive_map.html", selfcontained = T)
