@@ -1,5 +1,5 @@
 baseurl: https://rdvark.net/
-languageCode: en-us
+languageCode: en-gb
 title: Rdvark - an R blog
 theme: hugo-lithium
 googleAnalytics: ''
@@ -28,7 +28,7 @@ params:
   highlightjsTheme: github
   highlightjsVersion: 9.12.0
   logo:
-    alt: Logo
+    alt: 
     height: 50
     url: aardvark-icon.png
     width: 50
