@@ -6,13 +6,15 @@ slug: pretty-choropleth-maps-with-sf-and-ggplot2
 categories: 
   - data-viz
   - geospatial
-  - code
+  - r
+  - tutorial 
 tags: 
   - maps
   - sf
   - ggplot2
   - plotly
   - open-geography-portal
+  - api
 ---
 
 ## tl;dr
@@ -21,13 +23,13 @@ In this post, I produce a simple example of a choropleth map in R. I go over how
 
 ## Everyone loves a map
 
-[Choropleth maps](https://datavizproject.com/data-type/choropleth-map-2/) are an excellent data visualisation tool to show variation in some factor across different geographies. While there are multiple ways to produce such a map (and multiple packages to do so), in this post I show my go-to approach to produce a choropleth map using UK geographic boundaries.
+[Choropleth maps](https://datavizproject.com/data-type/choropleth-map-2/) are an excellent data visualisation tool to show variation in some factor across different geographies. While there are multiple ways to produce such a map (and multiple packages to do so) in R, in this post I show my go-to approach to produce a choropleth map using UK geographic boundaries.
 
 The process can be summarised by the following steps:
 
 1.  Read in the data you want to display on a map
 2.  Read in geographic boundaries
-3.  Combine those into one dataframe
+3.  Combine those into one dataframe/tibble
 4.  Use {ggplot2} and {sf} to produce a choropleth map  
 5.  (Optional) Make this map interactive with {plotly}
 
@@ -36,7 +38,7 @@ The process can be summarised by the following steps:
 Before doing anything else, we want to load the following packages:
 + {tidyverse} to manipulate our data and visualise it using ggplot2  
 + {sf} is the package that deals with our geographic boundaries
-+ {viridis} for its colourblind-friendly colour palette
++ {viridis} for its beautiful and colourblind-friendly colour palette
 + {plotly} to make our map interactive
 
 ``` r
@@ -70,18 +72,15 @@ Next, we will want to get local authority boundaries from the ONS Open Geography
 
 The format we want to import geographic boundaries in is called ‘GeoJSON.’ This
 is a format that is specifically designed to encode geographic data structures.
-Getting this format takes a bit of navigating. From the page linked above, we click
-on “View Full Details.”
+Getting this format from the ONS websitetakes a bit of navigating. From the page linked above, we click on “View Full Details.”
 
 ![screenshot of a standard ONS Open Geography Portal page for geographic boundaries](screenshots/screenshot-1.png)
 
-This will take us to a new page. On this new page, we scroll down to find the section
-“View API Resources” and copy the GeoJSON link.
+This will take us to a new page. On this new page, we scroll down to find the section “View API Resources” and copy the GeoJSON link.
 
 ![screenshot of the “View API Resources” section](screenshots/screenshot-2.png)
 
-To load the geographic boundaries in R, we use this GeoJSON link as an argument of the
-read_sf() function, as shown below. The read_sf() function will do its job, which is to retrieve the information from the ONS website and import it into R.
+To load the geographic boundaries in R, we use this GeoJSON link as an argument of the read_sf() function, as shown below. The read_sf() function will do its job, which is to retrieve the information from the ONS website and import it into R.
 
 ``` r
 GeoJSON_url <- "https://opendata.arcgis.com/datasets/69d8b52032024edf87561fb60fe07c85_0.geojson"
@@ -89,9 +88,7 @@ GeoJSON_url <- "https://opendata.arcgis.com/datasets/69d8b52032024edf87561fb60fe
 lad_boundaries_2020 <- read_sf(GeoJSON_url) 
 ```
 
-Our new object *lad_boundaries_2020* contains geographic information on all local authorities
-in the UK, including their centroid latitude and longitude, as well as
-their geometry (how they should be drawn on a map).
+Our new object *lad_boundaries_2020* contains geographic information on all local authorities in the UK, including their centroid latitude and longitude, as well as their geometry (how they should be drawn on a map).
 
     ## Simple feature collection with 6 features and 8 fields
     ## Geometry type: MULTIPOLYGON
@@ -109,11 +106,9 @@ their geometry (how they should be drawn on a map).
     ## 6 E06000006 Halton     53.3 -2.69 (((-2.690633 53.38539, -2.69090~ 354246 382146
     ## # ... with 2 more variables: SHAPE_Length <dbl>, SHAPE_Area <dbl>
 
-### Step 3: Combine our data into one dataframe
+### Step 3: Combine our data into one dataframe/tibble
 
-We then combine the data we want to map with geographic boundaries
-for all local authorities. We do this by joining *age_data* onto *lad_boundaries_2020*,
-using standard local authority codes as the variable to join these 2 datasets by.
+We then combine the data we want to map with geographic boundaries for all local authorities. We do this by joining *age_data* onto *lad_boundaries_2020*, using standard local authority codes as the variable to join these 2 datasets by.
 
 ``` r
 combined_data <- lad_boundaries_2020 %>% 
@@ -130,8 +125,8 @@ who live there.
 
 ``` r
 simple_choro_map <- combined_data %>% 
-  ggplot(aes(fill = median_age)) + # create a ggplot object and change 
-  # its fill colour according to median_age
+  ggplot(aes(fill = median_age)) + # create a ggplot object and 
+  # change its fill colour according to median_age
   geom_sf() # plot all local authority geometries
 
 simple_choro_map
@@ -152,12 +147,13 @@ Let’s make a few visual tweaks…
 ``` r
 pretty_choro_map <- combined_data %>% 
   ggplot(aes(fill = median_age,
-             text = str_c(LAD20NM, ": ", median_age) # (Optional: this 
-             # addition is not used for a static map but will be useful 
-             # in the next section where we make our map interactive)
+             text = str_c(LAD20NM, ": ", median_age) # (Optional: 
+             # this addition is not used for a static map but will 
+             # be useful in the next section when we make our map 
+             # interactive)
              )
          ) + 
-  geom_sf(colour = NA) + # Adding 'colour = NA' removes boundary lines 
+  geom_sf(colour = NA) + # Adding 'colour = NA' removes boundaries 
   # around each LA
   scale_fill_viridis("Median age") + # Changes our colour scale to 
   # viridis and prettifies our fill title in the legend
@@ -181,9 +177,9 @@ Thankfully, the {plotly} package makes it straightforward to transform any stati
 ``` r
 interactive_map <- ggplotly(pretty_choro_map, # wrap static map in 
                             # ggplotly()
-                            tooltip = "text" # (Optional: set the text 
-                            # aesthetic to be what we see when we hover 
-                            # over a local authority)
+                            tooltip = "text" # (Optional: set the 
+                            # text aesthetic to be what we see 
+                            # when we hover over a local auth.)
                             ) 
 
 interactive_map
