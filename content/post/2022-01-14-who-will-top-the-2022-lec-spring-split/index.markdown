@@ -12,7 +12,7 @@ tags:
 
 ## tl;dr 
 
-I build a simple predictive model to predict which teams will do well in the 2022 Spring Split of the League of Legends European Championship. The random forest model is based entirely on average player performance over the last 5 games and will serve as a baseline for future attempts! 
+I build a simple predictive model to predict which teams will do well in the 2022 Spring Split of the League of Legends European Championship. The random forest model is based entirely on average player performance over the last 5 games and will serve as a baseline for future attempts! See how these predictions compare to latest game results [here!](https://rdvark.shinyapps.io/LoL-LEC-Predictions-Tracker/?_ga=2.63722605.355509868.1643653815-135412473.1643148085)
 
 ## We live in exciting times
 
@@ -130,6 +130,8 @@ We can then summarise the predicted winners across the entire Split and come up 
 We're predicting a 3-way tie! Upon first glance and based on this year's new rosters, the top of the table looks plausible to me. I do think that some teams are underrated by the model though. I think MAD Lions will do even better than fourth place. Vitality is also stacked with talent this year, and I expect they will do better than this model predicts. 
 
 In any case, in addition to enjoying the games this Split, I will be crossing my fingers hoping that this model correctly predict at least 58% of the games!
+
+Interested in seeing how these predictions compare to actual game results? Look [here!](https://rdvark.shinyapps.io/LoL-LEC-Predictions-Tracker/?_ga=2.63722605.355509868.1643653815-135412473.1643148085)
 
 ## Parting thoughts
 
