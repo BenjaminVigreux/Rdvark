@@ -20,7 +20,7 @@ params:
   MathJaxCDN: //cdnjs.cloudflare.com/ajax/libs
   MathJaxVersion: 2.7.5
   description: A blog about R and other fun data things. 
-  favicon: favicon.png
+  favicon: favicon.ico
   logo:
     alt: 
     height: 50
