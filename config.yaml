@@ -2,8 +2,6 @@ baseurl: https://rdvark.net/
 languageCode: en-gb
 title: Rdvark - an R blog
 theme: hugo-lithium
-googleAnalytics: ''
-disqusShortname: ''
 ignoreFiles:
   - \.Rmd$
   - \.Rmarkdown$
