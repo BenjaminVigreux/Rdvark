@@ -24,3 +24,8 @@ options(
 
 # fix Hugo version
 options(blogdown.hugo.version = "0.91.0")
+
+# load blogdown on startup
+if (interactive()) {
+  suppressMessages(require(blogdown))
+}
